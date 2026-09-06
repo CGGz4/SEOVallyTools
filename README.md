@@ -123,7 +123,3 @@ This starts a fresh audit. It can take longer than reading a stored report becau
 - Follow the analysis allowance associated with your SEOVally plan.
 - Do not grant a key more scopes than the agent needs.
 - Revoke and replace a key immediately if it is exposed.
-
-## Self-hosting
-
-The same endpoint is available in a self-hosted deployment at `https://YOUR_HOST/mcp`. Issue keys from the SEOVally admin control panel, then configure the URL and Bearer token in your MCP client.
