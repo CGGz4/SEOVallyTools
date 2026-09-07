@@ -1,0 +1,584 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SEOVally MCP Server — Documentation</title>
+<meta name="description" content="Connect an MCP-compatible agent to SEOVally: run audits, pull reports, compare domains, and prioritize SEO fixes.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,440;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#172420;
+    --ink-soft:#3d4d47;
+    --paper:#f6f5f0;
+    --panel:#ffffff;
+    --line:#dbe1d7;
+    --signal:#1f7a54;
+    --signal-dim:#e4f0ea;
+    --amber:#b5651d;
+    --amber-dim:#f4e6d8;
+    --code-bg:#12211b;
+    --code-fg:#d9f1e3;
+    --code-accent:#7fd8ab;
+    --radius:3px;
+    --serif:'Fraunces', Georgia, serif;
+    --sans:'IBM Plex Sans', -apple-system, Segoe UI, sans-serif;
+    --mono:'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--sans);
+    font-size:16px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  a{color:var(--signal);}
+  a:focus-visible, button:focus-visible{outline:2px solid var(--signal); outline-offset:2px;}
+
+  code, .mono{font-family:var(--mono);}
+
+  .shell{
+    display:grid;
+    grid-template-columns:230px minmax(0,1fr);
+    max-width:1180px;
+    margin:0 auto;
+  }
+
+  /* ---- sidebar ---- */
+  .nav{
+    position:sticky;
+    top:0;
+    align-self:start;
+    height:100vh;
+    padding:40px 20px 40px 32px;
+    border-right:1px solid var(--line);
+    overflow-y:auto;
+  }
+  .nav .brand{
+    font-family:var(--serif);
+    font-weight:600;
+    font-size:1.15rem;
+    letter-spacing:-0.01em;
+    margin:0 0 4px;
+  }
+  .nav .brand-sub{
+    font-family:var(--mono);
+    font-size:0.72rem;
+    color:var(--ink-soft);
+    margin:0 0 28px;
+  }
+  .nav ul{list-style:none; margin:0; padding:0;}
+  .nav li{margin:0;}
+  .nav a{
+    display:block;
+    padding:7px 0;
+    color:var(--ink-soft);
+    text-decoration:none;
+    font-size:0.92rem;
+    border-left:2px solid transparent;
+    padding-left:12px;
+    margin-left:-13px;
+    transition:color .15s ease, border-color .15s ease;
+  }
+  .nav a:hover{color:var(--ink);}
+  .nav a.active{
+    color:var(--ink);
+    border-left-color:var(--signal);
+    font-weight:500;
+  }
+
+  /* ---- main ---- */
+  main{padding:0 40px 80px; min-width:0;}
+
+  .hero{
+    padding:56px 0 40px;
+    border-bottom:1px solid var(--line);
+    display:grid;
+    grid-template-columns:1fr 200px;
+    gap:32px;
+    align-items:center;
+  }
+  .hero h1{
+    font-family:var(--serif);
+    font-weight:600;
+    font-size:2.5rem;
+    line-height:1.12;
+    letter-spacing:-0.015em;
+    margin:0 0 16px;
+    max-width:15ch;
+  }
+  .hero p{
+    margin:0 0 24px;
+    max-width:52ch;
+    color:var(--ink-soft);
+    font-size:1.05rem;
+  }
+  .factstrip{
+    display:flex;
+    flex-wrap:wrap;
+    gap:0;
+    border:1px solid var(--line);
+    background:var(--panel);
+    border-radius:var(--radius);
+    overflow:hidden;
+  }
+  .fact{
+    flex:1 1 200px;
+    padding:12px 16px;
+    border-right:1px solid var(--line);
+  }
+  .fact:last-child{border-right:none;}
+  .fact-label{
+    font-size:0.7rem;
+    color:var(--ink-soft);
+    margin:0 0 4px;
+  }
+  .fact-value{
+    font-family:var(--mono);
+    font-size:0.85rem;
+    margin:0;
+    word-break:break-word;
+  }
+
+  .gauge-wrap{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+  }
+  .gauge-caption{
+    font-size:0.72rem;
+    color:var(--ink-soft);
+    text-align:center;
+    margin-top:4px;
+  }
+  .gauge-num{
+    font-family:var(--serif);
+    font-weight:600;
+    font-size:1.9rem;
+    fill:var(--ink);
+  }
+  .gauge-track{fill:none; stroke:var(--line); stroke-width:14; stroke-linecap:round;}
+  .gauge-value{fill:none; stroke:var(--signal); stroke-width:14; stroke-linecap:round;}
+
+  section{
+    padding:48px 0;
+    border-bottom:1px solid var(--line);
+    scroll-margin-top:24px;
+    max-width:720px;
+  }
+  section:last-of-type{border-bottom:none;}
+
+  h2{
+    font-family:var(--serif);
+    font-weight:600;
+    font-size:1.5rem;
+    letter-spacing:-0.01em;
+    margin:0 0 8px;
+  }
+  h3{
+    font-family:var(--sans);
+    font-weight:600;
+    font-size:1rem;
+    margin:28px 0 10px;
+  }
+  .lede{color:var(--ink-soft); margin:0 0 24px; max-width:60ch;}
+  p{margin:0 0 16px;}
+
+  /* steps */
+  ol.steps{list-style:none; margin:0; padding:0; counter-reset:step;}
+  ol.steps li{
+    counter-increment:step;
+    position:relative;
+    padding:2px 0 20px 40px;
+    border-left:1px solid var(--line);
+    margin-left:13px;
+  }
+  ol.steps li:last-child{border-color:transparent; padding-bottom:0;}
+  ol.steps li::before{
+    content:counter(step);
+    position:absolute;
+    left:-13px;
+    top:0;
+    width:26px;
+    height:26px;
+    border-radius:50%;
+    background:var(--panel);
+    border:1px solid var(--signal);
+    color:var(--signal);
+    font-family:var(--mono);
+    font-size:0.78rem;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  /* tables */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:0 0 8px;
+    font-size:0.92rem;
+  }
+  th{
+    text-align:left;
+    font-weight:600;
+    padding:8px 14px;
+    border-bottom:1px solid var(--ink);
+    font-size:0.8rem;
+  }
+  td{
+    padding:12px 14px;
+    border-bottom:1px solid var(--line);
+    vertical-align:top;
+  }
+  td.mono, th.mono{font-family:var(--mono); font-size:0.85rem;}
+  tr:last-child td{border-bottom:1px solid var(--line);}
+
+  /* code blocks */
+  .codeblock{
+    position:relative;
+    background:var(--code-bg);
+    color:var(--code-fg);
+    border-radius:var(--radius);
+    margin:0 0 20px;
+    overflow:hidden;
+  }
+  .codeblock-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:8px 14px;
+    font-family:var(--mono);
+    font-size:0.72rem;
+    color:var(--code-accent);
+    border-bottom:1px solid rgba(255,255,255,0.08);
+  }
+  .codeblock pre{
+    margin:0;
+    padding:16px;
+    overflow-x:auto;
+    font-family:var(--mono);
+    font-size:0.83rem;
+    line-height:1.55;
+  }
+  .copy-btn{
+    background:transparent;
+    border:1px solid rgba(255,255,255,0.25);
+    color:var(--code-fg);
+    font-family:var(--mono);
+    font-size:0.68rem;
+    padding:3px 9px;
+    border-radius:var(--radius);
+    cursor:pointer;
+  }
+  .copy-btn:hover{border-color:var(--code-accent); color:var(--code-accent);}
+
+  /* prompts */
+  .prompt-list{list-style:none; margin:0; padding:0; display:grid; gap:10px;}
+  .prompt-list li{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-left:3px solid var(--signal);
+    padding:12px 16px;
+    border-radius:var(--radius);
+    font-size:0.94rem;
+  }
+
+  /* security */
+  .flags{list-style:none; margin:0; padding:0; display:grid; gap:1px; background:var(--line); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden;}
+  .flags li{background:var(--panel); padding:12px 16px; font-size:0.94rem;}
+
+  .note{
+    background:var(--amber-dim);
+    border:1px solid var(--amber);
+    border-radius:var(--radius);
+    padding:12px 16px;
+    font-size:0.92rem;
+    margin:0 0 20px;
+  }
+  .note strong{color:var(--amber);}
+
+  footer{
+    max-width:720px;
+    padding:32px 0 0;
+    color:var(--ink-soft);
+    font-size:0.85rem;
+  }
+
+  /* mobile nav */
+  .mobile-nav{display:none;}
+
+  @media (max-width: 880px){
+    .shell{grid-template-columns:1fr;}
+    .nav{display:none;}
+    .mobile-nav{
+      display:flex;
+      overflow-x:auto;
+      gap:18px;
+      padding:14px 20px;
+      position:sticky;
+      top:0;
+      background:var(--paper);
+      border-bottom:1px solid var(--line);
+      z-index:5;
+    }
+    .mobile-nav a{
+      font-size:0.85rem;
+      white-space:nowrap;
+      color:var(--ink-soft);
+      text-decoration:none;
+      font-family:var(--mono);
+    }
+    .mobile-nav a.active{color:var(--signal);}
+    main{padding:0 20px 60px;}
+    .hero{grid-template-columns:1fr; padding-top:32px;}
+    .hero h1{font-size:2rem;}
+    .gauge-wrap{order:-1; margin:0 auto 12px;}
+  }
+</style>
+</head>
+<body>
+
+<nav class="mobile-nav" aria-label="Section navigation">
+  <a href="#overview">Overview</a>
+  <a href="#get-key">Get a key</a>
+  <a href="#connect">Connect</a>
+  <a href="#tools">Tools</a>
+  <a href="#prompts">Prompts</a>
+  <a href="#test">Test</a>
+  <a href="#example">Example call</a>
+  <a href="#security">Security</a>
+</nav>
+
+<div class="shell">
+  <aside class="nav" aria-label="Section navigation">
+    <p class="brand">SEOVally</p>
+    <p class="brand-sub">MCP Server Docs</p>
+    <ul>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#get-key">Get an API key</a></li>
+      <li><a href="#connect">Connect a client</a></li>
+      <li><a href="#tools">Available tools</a></li>
+      <li><a href="#prompts">Good agent prompts</a></li>
+      <li><a href="#test">Test the connection</a></li>
+      <li><a href="#example">Example tool call</a></li>
+      <li><a href="#security">Security and limits</a></li>
+    </ul>
+  </aside>
+
+  <main>
+    <header class="hero" id="overview">
+      <div>
+        <h1>Give your agent live, actionable SEO data.</h1>
+        <p>The SEOVally MCP server lets compatible clients run an audit, retrieve a report, compare domains, and turn findings into prioritized SEO work — without leaving the agent.</p>
+        <div class="factstrip">
+          <div class="fact">
+            <p class="fact-label">Endpoint</p>
+            <p class="fact-value">https://seovally.com/mcp</p>
+          </div>
+          <div class="fact">
+            <p class="fact-label">Transport</p>
+            <p class="fact-value">Streamable HTTP · JSON-RPC 2.0</p>
+          </div>
+          <div class="fact">
+            <p class="fact-label">Authentication</p>
+            <p class="fact-value">Bearer svk_...</p>
+          </div>
+        </div>
+      </div>
+      <div class="gauge-wrap" aria-hidden="true">
+        <svg viewBox="0 0 200 120" width="180" height="108">
+          <path class="gauge-track" d="M20,100 A80,80 0 0 1 180,100"/>
+          <path class="gauge-value" d="M20,100 A80,80 0 0 1 180,100" stroke-dasharray="251.2" stroke-dashoffset="45.2"/>
+          <text x="100" y="92" text-anchor="middle" class="gauge-num">82</text>
+        </svg>
+        <p class="gauge-caption">example.com — AI visibility score</p>
+      </div>
+    </header>
+
+    <section id="get-key">
+      <h2>Get an API key</h2>
+      <p class="lede">Keys are issued per client, so a compromised key can be revoked without affecting others.</p>
+      <ol class="steps">
+        <li>Create or sign in to your account at <a href="https://seovally.com" target="_blank" rel="noopener">seovally.com</a>.</li>
+        <li>MCP access is available on the Pro and Agency plans. Check availability on the <a href="https://seovally.com/plans" target="_blank" rel="noopener">Plans</a> page.</li>
+        <li>Contact SEOVally through <a href="https://seovally.com/contact" target="_blank" rel="noopener">seovally.com/contact</a> with the email on your account and the name you want for the key — for example, <code>Cursor production</code>.</li>
+        <li>Copy the <code>svk_...</code> key when it's issued. It's shown only once, so save it in your agent client's secret store or an environment variable.</li>
+      </ol>
+      <div class="note"><strong>Handle with care.</strong> Never commit an API key to Git or paste it into prompts, issues, or shared configuration files. Revoke a key and request a replacement if it's exposed.</div>
+    </section>
+
+    <section id="connect">
+      <h2>Connect an MCP client</h2>
+      <p class="lede">Use your client's remote or Streamable HTTP connection flow with these settings.</p>
+      <table>
+        <thead><tr><th>Setting</th><th class="mono">Value</th></tr></thead>
+        <tbody>
+          <tr><td>Server URL</td><td class="mono">https://seovally.com/mcp</td></tr>
+          <tr><td>Authentication header</td><td class="mono">Authorization: Bearer ${SEOVALLY_API_KEY}</td></tr>
+          <tr><td>Protocol</td><td class="mono">Streamable HTTP</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Store the key outside the configuration file</h3>
+      <div class="codeblock">
+        <div class="codeblock-head"><span>bash</span><button class="copy-btn" type="button">Copy</button></div>
+        <pre><code>export SEOVALLY_API_KEY='svk_replace_with_your_key'</code></pre>
+      </div>
+
+      <p>Most MCP clients use a configuration shaped like this. Check your client's documentation for the exact settings screen or file location.</p>
+      <div class="codeblock">
+        <div class="codeblock-head"><span>json</span><button class="copy-btn" type="button">Copy</button></div>
+        <pre><code>{
+  "mcpServers": {
+    "seovally": {
+      "url": "https://seovally.com/mcp",
+      "headers": {
+        "Authorization": "Bearer ${SEOVALLY_API_KEY}"
+      }
+    }
+  }
+}</code></pre>
+      </div>
+    </section>
+
+    <section id="tools">
+      <h2>Available tools</h2>
+      <p class="lede">A key's scopes are set when it's issued. A tool outside those scopes simply isn't listed to the client.</p>
+      <table>
+        <thead>
+          <tr><th class="mono">Tool</th><th>What an agent can do with it</th><th class="mono">Scope</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="mono">analyze_domain</td><td>Run a fresh audit and receive scores, category results, page facts, issue counts, and priority fixes.</td><td class="mono">analyses</td></tr>
+          <tr><td class="mono">get_priority_fixes</td><td>Get a short, ordered action list from an on-page and AI-search audit.</td><td class="mono">analyses</td></tr>
+          <tr><td class="mono">get_report</td><td>Retrieve the latest stored scorecard for a domain.</td><td class="mono">reports</td></tr>
+          <tr><td class="mono">compare_reports</td><td>Benchmark two to five domains using their stored reports, without starting new audits.</td><td class="mono">reports</td></tr>
+          <tr><td class="mono">list_recent_reports</td><td>Browse recently analyzed domains and their scores.</td><td class="mono">reports</td></tr>
+          <tr><td class="mono">list_crawl_history</td><td>View recent deep-crawl runs for the key owner.</td><td class="mono">crawls</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="prompts">
+      <h2>Good agent prompts</h2>
+      <p class="lede">A few starting points once the server is connected.</p>
+      <ul class="prompt-list">
+        <li>"Audit example.com, then make a three-item implementation plan from the priority fixes."</li>
+        <li>"Compare the stored SEO and AI visibility scores for example.com, competitor.com, and anothercompetitor.com."</li>
+        <li>"Run get_priority_fixes for example.com and turn each fix into an engineering ticket with acceptance criteria."</li>
+        <li>"List my recent reports and identify domains with an AI visibility score below 60."</li>
+      </ul>
+    </section>
+
+    <section id="test">
+      <h2>Test the connection</h2>
+      <p class="lede">Replace <code>svk_...</code> with your own key. The response should identify the server and its available tools.</p>
+      <div class="codeblock">
+        <div class="codeblock-head"><span>bash — initialize</span><button class="copy-btn" type="button">Copy</button></div>
+        <pre><code>curl https://seovally.com/mcp \
+  -X POST \
+  -H 'Content-Type: application/json' \
+  -H 'Authorization: Bearer svk_...' \
+  --data '{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+      "protocolVersion": "2025-03-26",
+      "capabilities": {},
+      "clientInfo": {"name": "my-agent", "version": "1.0"}
+    }
+  }'</code></pre>
+      </div>
+
+      <p>Then list the tools allowed by your key:</p>
+      <div class="codeblock">
+        <div class="codeblock-head"><span>bash — tools/list</span><button class="copy-btn" type="button">Copy</button></div>
+        <pre><code>curl https://seovally.com/mcp \
+  -X POST \
+  -H 'Content-Type: application/json' \
+  -H 'Authorization: Bearer svk_...' \
+  --data '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}'</code></pre>
+      </div>
+    </section>
+
+    <section id="example">
+      <h2>Example tool call</h2>
+      <p class="lede">This starts a fresh audit. It can take longer than reading a stored report, since SEOVally fetches and evaluates the target site.</p>
+      <div class="codeblock">
+        <div class="codeblock-head"><span>json — tools/call</span><button class="copy-btn" type="button">Copy</button></div>
+        <pre><code>{
+  "jsonrpc": "2.0",
+  "id": 3,
+  "method": "tools/call",
+  "params": {
+    "name": "get_priority_fixes",
+    "arguments": {
+      "domain": "example.com",
+      "max_items": 5
+    }
+  }
+}</code></pre>
+      </div>
+    </section>
+
+    <section id="security">
+      <h2>Security and limits</h2>
+      <ul class="flags">
+        <li>Keys are stored as hashes; the complete key is only displayed at issuance.</li>
+        <li>Every call is recorded against the key for operational usage tracking.</li>
+        <li>Follow the analysis allowance associated with your SEOVally plan.</li>
+        <li>Do not grant a key more scopes than the agent needs.</li>
+        <li>Revoke and replace a key immediately if it's exposed.</li>
+      </ul>
+    </section>
+
+    <footer>
+      <p>Documentation for the SEOVally MCP server. See the project on <a href="https://github.com/CGGz4/SEOVallyTools" target="_blank" rel="noopener">GitHub</a>.</p>
+    </footer>
+  </main>
+</div>
+
+<script>
+  // copy-to-clipboard for code blocks
+  document.querySelectorAll('.copy-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var code = btn.closest('.codeblock').querySelector('pre code').innerText;
+      navigator.clipboard.writeText(code).then(function(){
+        var original = btn.textContent;
+        btn.textContent = 'Copied';
+        setTimeout(function(){ btn.textContent = original; }, 1400);
+      });
+    });
+  });
+
+  // active-section highlighting for both nav rails
+  var sections = document.querySelectorAll('main section, main header.hero');
+  var navLinks = document.querySelectorAll('.nav a, .mobile-nav a');
+
+  var observer = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if(entry.isIntersecting){
+        var id = entry.target.getAttribute('id');
+        navLinks.forEach(function(link){
+          link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+        });
+      }
+    });
+  }, { rootMargin: '-40% 0px -50% 0px', threshold: 0 });
+
+  sections.forEach(function(s){ observer.observe(s); });
+</script>
+
+</body>
+</html>
