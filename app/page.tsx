@@ -96,7 +96,9 @@ export default function Home() {
                 </text>
               </svg>
               <p className="gauge-caption">
-                example.com — AI visibility score
+                <a href="https://aipricehistory.com">
+                  aipricehistory.com
+                </a> — AI visibility score
               </p>
             </div>
           </header>
@@ -110,11 +112,7 @@ export default function Home() {
             <ol className="steps">
               <li>
                 Create or sign in to your account at{" "}
-                <a
-                  href="https://seovally.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
+                <a href="https://seovally.com">
                   seovally.com
                 </a>
                 .
